@@ -1,0 +1,323 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.db{padding:1.5rem 0;}
+.section-title{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;margin-top:1.5rem;}
+.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:.5rem;}
+.mc{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:14px 16px;}
+.mc-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:4px;}
+.mc-value{font-size:22px;font-weight:500;color:var(--color-text-primary);}
+.mc-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:2px;}
+.card{background:var(--color-background-primary);border:.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:.5rem;}
+.tab-bar{display:flex;gap:4px;margin-bottom:1rem;}
+.tab{font-size:12px;padding:5px 14px;border-radius:var(--border-radius-md);border:.5px solid var(--color-border-secondary);cursor:pointer;color:var(--color-text-secondary);background:transparent;}
+.tab.active{background:var(--color-background-secondary);color:var(--color-text-primary);font-weight:500;}
+.panel{display:none;}.panel.active{display:block;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{font-size:11px;font-weight:500;color:var(--color-text-secondary);text-align:left;padding:6px 8px;border-bottom:.5px solid var(--color-border-tertiary);}
+tbody td{padding:7px 8px;border-bottom:.5px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+input[type=number],select,input[type=text],input[type=date]{font-size:12px;padding:4px 7px;border:.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary);width:100%;}
+.btn{font-size:12px;padding:6px 14px;border-radius:var(--border-radius-md);border:.5px solid var(--color-border-secondary);cursor:pointer;background:transparent;color:var(--color-text-primary);}
+.btn-add{background:var(--color-background-secondary);font-weight:500;}
+.btn-del{color:var(--color-text-secondary);font-size:11px;border:none;cursor:pointer;background:transparent;padding:0 4px;}
+.badge{font-size:10px;padding:2px 8px;border-radius:var(--border-radius-md);font-weight:500;}
+.b-j{background:#E1F5EE;color:#085041;}
+.b-h{background:#E6F1FB;color:#0C447C;}
+.b-m{background:#EEEDFE;color:#3C3489;}
+.b-co{background:#E1F5EE;color:#085041;}
+.b-lo{background:#E6F1FB;color:#0C447C;}
+.sim-row{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:12px;}
+.sim-label{font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px;}
+.rev-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;padding-top:12px;border-top:.5px solid var(--color-border-tertiary);}
+.rev-item{text-align:center;}
+.rev-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px;}
+.rev-val{font-size:15px;font-weight:500;color:var(--color-text-primary);}
+.chart-wrap{position:relative;width:100%;height:200px;}
+.add-form{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:8px;align-items:end;padding:12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);margin-bottom:12px;}
+.add-form label{font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px;}
+.total-row td{font-weight:500;background:var(--color-background-secondary);border-radius:var(--border-radius-md);}
+.progress-bar-bg{background:var(--color-border-tertiary);border-radius:4px;height:6px;width:100%;margin-top:4px;}
+.progress-bar{height:6px;border-radius:4px;background:#1D9E75;}
+</style>
+
+<div class="db">
+
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('overview')">Vue générale</button>
+  <button class="tab" onclick="switchTab('reservations')">Réservations</button>
+  <button class="tab" onclick="switchTab('simulator')">Simulateur</button>
+</div>
+
+<!-- OVERVIEW -->
+<div id="tab-overview" class="panel active">
+  <p class="section-title">Métriques globales</p>
+  <div class="metric-grid">
+    <div class="mc"><div class="mc-label">Corridors</div><div class="mc-value">4</div><div class="mc-sub">Abidjan</div></div>
+    <div class="mc"><div class="mc-label">Flotte</div><div class="mc-value">10 bus</div><div class="mc-sub">246 places totales</div></div>
+    <div class="mc"><div class="mc-label">Passagers réservés</div><div class="mc-value" id="ov-pax">0</div><div class="mc-sub">toutes formules</div></div>
+    <div class="mc"><div class="mc-label">Revenu confirmé</div><div class="mc-value" id="ov-rev">0</div><div class="mc-sub">FCFA</div></div>
+  </div>
+
+  <p class="section-title">Taux de remplissage par corridor</p>
+  <div class="card">
+    <div id="fill-rates"></div>
+  </div>
+
+  <p class="section-title">Répartition des réservations</p>
+  <div class="card">
+    <div class="chart-wrap"><canvas id="chartResa"></canvas></div>
+  </div>
+
+  <p class="section-title">Corridors</p>
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div style="font-size:13px;font-weight:500;">Cocody 9km → Sol Beni</div><span class="badge b-co">Court</span></div><div style="font-size:18px;font-weight:500;margin-top:6px;">300 <span style="font-size:12px;font-weight:400;color:var(--color-text-secondary)">FCFA</span></div></div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div style="font-size:13px;font-weight:500;">Bingerville → Gare Sud</div><span class="badge b-lo">Long</span></div><div style="font-size:18px;font-weight:500;margin-top:6px;">700 <span style="font-size:12px;font-weight:400;color:var(--color-text-secondary)">FCFA</span></div></div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div style="font-size:13px;font-weight:500;">Bingerville → Cité Admin</div><span class="badge b-lo">Long</span></div><div style="font-size:18px;font-weight:500;margin-top:6px;">700 <span style="font-size:12px;font-weight:400;color:var(--color-text-secondary)">FCFA</span></div></div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;"><div style="font-size:13px;font-weight:500;">220 Lgts → Yopougon ZI</div><span class="badge b-lo">Long</span></div><div style="font-size:18px;font-weight:500;margin-top:6px;">800 <span style="font-size:12px;font-weight:400;color:var(--color-text-secondary)">FCFA</span></div></div>
+  </div>
+</div>
+
+<!-- RESERVATIONS -->
+<div id="tab-reservations" class="panel">
+  <p class="section-title">Ajouter une réservation</p>
+  <div class="add-form">
+    <div>
+      <label>Corridor</label>
+      <select id="new-corridor">
+        <option value="cocody">Cocody 9km → Sol Beni (300F)</option>
+        <option value="bing-sud">Bingerville → Gare Sud (700F)</option>
+        <option value="bing-admin">Bingerville → Cité Admin (700F)</option>
+        <option value="yop">220 Lgts → Yopougon ZI (800F)</option>
+      </select>
+    </div>
+    <div>
+      <label>Formule</label>
+      <select id="new-type">
+        <option value="J">Journalier</option>
+        <option value="H">Hebdomadaire</option>
+        <option value="M">Mensuel</option>
+      </select>
+    </div>
+    <div>
+      <label>Passagers</label>
+      <input type="number" id="new-pax" value="1" min="1" max="246">
+    </div>
+    <div>
+      <label>Date</label>
+      <input type="date" id="new-date">
+    </div>
+    <div>
+      <button class="btn btn-add" onclick="addResa()">+ Ajouter</button>
+    </div>
+  </div>
+
+  <p class="section-title">Journal des réservations</p>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Corridor</th>
+          <th>Formule</th>
+          <th>Passagers</th>
+          <th>Montant (FCFA)</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="resa-body"></tbody>
+      <tfoot><tr class="total-row" id="resa-total"></tr></tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- SIMULATOR -->
+<div id="tab-simulator" class="panel">
+  <p class="section-title">Simulateur de revenus</p>
+  <div class="card">
+    <div class="sim-row">
+      <div>
+        <span class="sim-label">Corridor</span>
+        <select id="sim-corridor">
+          <option value="300">Cocody 9km → Sol Beni (300 FCFA)</option>
+          <option value="700">Bingerville → Gare Sud (700 FCFA)</option>
+          <option value="700">Bingerville → Cité Admin (700 FCFA)</option>
+          <option value="800">220 Lgts → Yopougon ZI (800 FCFA)</option>
+        </select>
+      </div>
+      <div>
+        <span class="sim-label">Remplissage — <span id="fill-out">80</span>%</span>
+        <input type="range" id="sim-fill" min="10" max="100" step="5" value="80">
+      </div>
+      <div>
+        <span class="sim-label">Rotations/bus/jour — <span id="rot-out">4</span></span>
+        <input type="range" id="sim-rot" min="1" max="10" step="1" value="4">
+      </div>
+    </div>
+    <div class="rev-grid">
+      <div class="rev-item"><div class="rev-label">Journalier</div><div class="rev-val" id="rev-day">–</div></div>
+      <div class="rev-item"><div class="rev-label">Hebdo (5j)</div><div class="rev-val" id="rev-week">–</div></div>
+      <div class="rev-item"><div class="rev-label">Mensuel (22j)</div><div class="rev-val" id="rev-month">–</div></div>
+    </div>
+  </div>
+
+  <p class="section-title">Revenus par formule (corridor sélectionné)</p>
+  <div class="card">
+    <div class="chart-wrap"><canvas id="chartSim"></canvas></div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const CORRIDORS = {
+  cocody:     {label:'Cocody 9km → Sol Beni', price:300, cap:246},
+  'bing-sud': {label:'Bingerville → Gare Sud', price:700, cap:246},
+  'bing-admin':{label:'Bingerville → Cité Admin', price:700, cap:246},
+  yop:        {label:'220 Lgts → Yopougon ZI', price:800, cap:246}
+};
+const TYPES = {J:'Journalier',H:'Hebdomadaire',M:'Mensuel'};
+const MULTIPLIER = {J:1,H:5,M:22};
+
+let reservations = JSON.parse(localStorage.getItem('shuttlers_resa')||'[]');
+
+function save(){localStorage.setItem('shuttlers_resa',JSON.stringify(reservations));}
+
+function fmt(n){return Math.round(n).toLocaleString('fr-FR');}
+
+function badgeType(t){
+  const cls={J:'b-j',H:'b-h',M:'b-m'};
+  return `<span class="badge ${cls[t]}">${TYPES[t]}</span>`;
+}
+
+function calcAmount(corridorKey,type,pax){
+  const c=CORRIDORS[corridorKey];
+  return c.price * pax * MULTIPLIER[type];
+}
+
+function addResa(){
+  const cKey=document.getElementById('new-corridor').value;
+  const type=document.getElementById('new-type').value;
+  const pax=parseInt(document.getElementById('new-pax').value)||1;
+  const date=document.getElementById('new-date').value||new Date().toISOString().slice(0,10);
+  reservations.push({id:Date.now(),corridor:cKey,type,pax,date,status:'Confirmé'});
+  save();
+  renderAll();
+}
+
+function deleteResa(id){
+  reservations=reservations.filter(r=>r.id!==id);
+  save();
+  renderAll();
+}
+
+function renderTable(){
+  const tbody=document.getElementById('resa-body');
+  if(!reservations.length){
+    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--color-text-secondary);padding:20px;font-size:13px;">Aucune réservation — ajoutez-en une ci-dessus</td></tr>`;
+    document.getElementById('resa-total').innerHTML='';
+    return;
+  }
+  let totalPax=0,totalRev=0;
+  tbody.innerHTML=reservations.map(r=>{
+    const c=CORRIDORS[r.corridor];
+    const amt=calcAmount(r.corridor,r.type,r.pax);
+    totalPax+=r.pax; totalRev+=amt;
+    return `<tr>
+      <td>${r.date}</td>
+      <td style="font-size:12px;">${c.label}</td>
+      <td>${badgeType(r.type)}</td>
+      <td style="text-align:right;">${r.pax}</td>
+      <td style="text-align:right;font-weight:500;">${fmt(amt)}</td>
+      <td><span class="badge b-co">${r.status}</span></td>
+      <td><button class="btn-del" onclick="deleteResa(${r.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('resa-total').innerHTML=`
+    <td colspan="3" style="padding:8px;font-size:12px;color:var(--color-text-secondary);">Total</td>
+    <td style="text-align:right;padding:8px;">${totalPax}</td>
+    <td style="text-align:right;padding:8px;">${fmt(totalRev)} FCFA</td>
+    <td colspan="2"></td>`;
+}
+
+function renderOverview(){
+  let totalPax=0,totalRev=0;
+  const byCorr={};
+  const byType={J:0,H:0,M:0};
+  Object.keys(CORRIDORS).forEach(k=>byCorr[k]={pax:0});
+  reservations.forEach(r=>{
+    const amt=calcAmount(r.corridor,r.type,r.pax);
+    totalPax+=r.pax; totalRev+=amt;
+    byCorr[r.corridor].pax+=r.pax;
+    byType[r.type]+=r.pax;
+  });
+  document.getElementById('ov-pax').textContent=fmt(totalPax);
+  document.getElementById('ov-rev').textContent=fmt(totalRev/1000)+'k';
+
+  const fillDiv=document.getElementById('fill-rates');
+  fillDiv.innerHTML=Object.entries(CORRIDORS).map(([k,c])=>{
+    const pct=Math.min(100,Math.round((byCorr[k].pax/c.cap)*100));
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+        <span style="color:var(--color-text-secondary);">${c.label}</span>
+        <span style="font-weight:500;">${byCorr[k].pax} pax · ${pct}%</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  if(window.chartResaInstance) window.chartResaInstance.destroy();
+  window.chartResaInstance=new Chart(document.getElementById('chartResa'),{
+    type:'doughnut',
+    data:{
+      labels:['Journalier','Hebdomadaire','Mensuel'],
+      datasets:[{data:[byType.J,byType.H,byType.M],backgroundColor:['#5DCAA5','#378ADD','#7F77DD'],borderWidth:0}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:12},boxWidth:12}}}}
+  });
+}
+
+function renderSim(){
+  const price=parseInt(document.getElementById('sim-corridor').value);
+  const fill=parseInt(document.getElementById('sim-fill').value)/100;
+  const rot=parseInt(document.getElementById('sim-rot').value);
+  const pax=Math.round(246*fill);
+  const day=price*pax*rot;
+  document.getElementById('rev-day').textContent=fmt(day)+' FCFA';
+  document.getElementById('rev-week').textContent=fmt(day*5)+' FCFA';
+  document.getElementById('rev-month').textContent=fmt(day*22)+' FCFA';
+
+  const jRev=price*pax*rot;
+  const hRev=price*pax*rot*5;
+  const mRev=price*pax*rot*22;
+  if(window.chartSimInstance) window.chartSimInstance.destroy();
+  window.chartSimInstance=new Chart(document.getElementById('chartSim'),{
+    type:'bar',
+    data:{
+      labels:['Journalier','Hebdo (5j)','Mensuel (22j)'],
+      datasets:[{label:'FCFA',data:[jRev,hRev,mRev],backgroundColor:['#5DCAA5','#378ADD','#7F77DD'],borderRadius:6,borderSkipped:false}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(0)+'k':v,font:{size:11}},grid:{color:'rgba(128,128,128,.12)'}},x:{ticks:{font:{size:11}},grid:{display:false}}}}
+  });
+}
+
+function renderAll(){renderTable();renderOverview();renderSim();}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  event.target.classList.add('active');
+  renderAll();
+}
+
+document.getElementById('sim-fill').addEventListener('input',e=>{document.getElementById('fill-out').textContent=e.target.value;renderSim();});
+document.getElementById('sim-rot').addEventListener('input',e=>{document.getElementById('rot-out').textContent=e.target.value;renderSim();});
+document.getElementById('sim-corridor').addEventListener('change',renderSim);
+document.getElementById('new-date').valueAsDate=new Date();
+
+renderAll();
+</script>
